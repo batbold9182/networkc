@@ -1,12 +1,17 @@
 {
   "expo": {
-    "name": "networkc",
+    "name": "currency-converter by Batbold",
     "slug": "networkc",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "networkc",
     "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "assets/images/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true

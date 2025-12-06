@@ -5,6 +5,12 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   balance:{ type: Number, default: 0 },
+  wallet: [
+    {
+      code: String, // USD, EUR, etc
+      amount: Number
+    }
+]
 });
 
 // Hash password before saving

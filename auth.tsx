@@ -9,6 +9,7 @@ type User = {
   _id: string;
   email: string;
   balance?: number; // optional if you plan to track account funding
+  wallet?: { code: string; amount: number }[]; // <-- add this
 };
 
 type AuthContextType = {

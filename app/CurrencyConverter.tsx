@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import { BACKEND_URL } from "../config";
 
 export type Rate = {
@@ -11,23 +11,26 @@ export type Rate = {
 };
 
 type Props = {
-  token: string;
+  token: string | null;
+  amount: string;
+  onAmountChange: (amount: string) => void;
+  inputCurrency: Rate | null;
+  onInputCurrencyChange: (rate: Rate | null) => void;
   selectedRate: Rate | null;
   onRateChange: (rate: Rate | null) => void;
-  amount: string;
-  onAmountChange: (value: string) => void;
   converted: number | null;
-  setConverted: (value: number | null) => void;
+  onConvertedChange: (value: number | null) => void;
 };
 
 export default function CurrencyConverter({
-  token,
-  selectedRate,
-  onRateChange,
   amount,
   onAmountChange,
+  inputCurrency,
+  onInputCurrencyChange,
+  selectedRate,
+  onRateChange,
   converted,
-  setConverted,
+  onConvertedChange,
 }: Props) {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loadingRates, setLoadingRates] = useState(true);
@@ -36,56 +39,104 @@ export default function CurrencyConverter({
     const fetchRates = async () => {
       try {
         const res = await axios.get<Rate[]>(`${BACKEND_URL}/api/rates`);
-        setRates(res.data);
-        onRateChange(res.data.find(r => r.code === "USD") || null);
+        const allRates = [
+          { code: "PLN", currency: "Polish Zloty", mid: 1 },
+          ...res.data,
+        ];
+
+        setRates(allRates);
+
+        const plnRate = allRates.find((r) => r.code === "PLN") || null;
+        const usdRate = allRates.find((r) => r.code === "USD") || null;
+
+        // >>>>>>> FIX: push defaults to parent
+        if (!inputCurrency) onInputCurrencyChange(plnRate);
+        if (!selectedRate) onRateChange(usdRate);
       } catch (err) {
-        console.error("Fetch rates error:", err);
+        console.error("Failed to fetch rates:", err);
       } finally {
         setLoadingRates(false);
       }
     };
+
     fetchRates();
-  }, [onRateChange]);
+  }, []);
 
   useEffect(() => {
-    if (!selectedRate || !amount) return setConverted(null);
+    if (!inputCurrency || !selectedRate || !amount) {
+      onConvertedChange(null);
+      return;
+    }
+
     const value = parseFloat(amount);
-    setConverted(isNaN(value) ? null : value * selectedRate.mid);
-  }, [amount, selectedRate,setConverted]);
+    if (isNaN(value)) return onConvertedChange(null);
+
+    const amountInPLN =
+      inputCurrency.code === "PLN" ? value : value / inputCurrency.mid;
+
+    const result =
+      selectedRate.code === "PLN" ? amountInPLN : amountInPLN / selectedRate.mid;
+
+    onConvertedChange(result);
+  }, [amount, inputCurrency, selectedRate]);
 
   return (
     <View style={styles.section}>
-      <Text style={styles.label}>Amount in PLN:</Text>
+      <Text style={styles.label}>Amount:</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter amount"
-        placeholderTextColor="#999"
-        keyboardType="numeric"
         value={amount}
         onChangeText={onAmountChange}
+        keyboardType="numeric"
       />
 
-      <Text style={styles.label}>Select currency:</Text>
+      <Text style={styles.label}>Input Currency:</Text>
+      {loadingRates ? (
+        <ActivityIndicator size="small" color="#fff" />
+      ) : (
+        <Picker
+          selectedValue={inputCurrency?.code}
+          onValueChange={(c) =>
+            onInputCurrencyChange(rates.find((r) => r.code === c) || null)
+          }
+          style={{ color: "#fff" }}
+        >
+          {rates.map((r) => (
+            <Picker.Item
+              label={`${r.code} (${r.currency})`}
+              value={r.code}
+              key={r.code}
+            />
+          ))}
+        </Picker>
+      )}
+
+      <Text style={styles.label}>Target Currency:</Text>
       {loadingRates ? (
         <ActivityIndicator size="small" color="#fff" />
       ) : (
         <Picker
           selectedValue={selectedRate?.code}
-          onValueChange={code => {
-            const rate = rates.find(r => r.code === code) || null;
-            onRateChange(rate);
-          }}
+          onValueChange={(c) =>
+            onRateChange(rates.find((r) => r.code === c) || null)
+          }
           style={{ color: "#fff" }}
         >
-          {rates.map(r => (
-            <Picker.Item label={`${r.code} (${r.currency})`} value={r.code} key={r.code} />
+          {rates.map((r) => (
+            <Picker.Item
+              label={`${r.code} (${r.currency})`}
+              value={r.code}
+              key={r.code}
+            />
           ))}
         </Picker>
       )}
 
-      {converted !== null && selectedRate && (
+      {converted !== null && (
         <Text style={styles.result}>
-          {amount} PLN = {converted.toFixed(2)} {selectedRate.code}
+          {amount} {inputCurrency?.code} ={" "}
+          {converted.toFixed(2)} {selectedRate?.code}
         </Text>
       )}
     </View>
@@ -93,8 +144,26 @@ export default function CurrencyConverter({
 }
 
 const styles = StyleSheet.create({
-  section: { marginVertical: 10, padding: 10, backgroundColor: "rgba(0,0,0,0.3)", borderRadius: 5 },
+  section: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 5,
+  },
   label: { fontSize: 16, marginBottom: 5, color: "#fff" },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 5, color: "#000", backgroundColor: "rgba(255,255,255,0.85)" },
-  result: { fontSize: 18, textAlign: "center", marginTop: 20, fontWeight: "bold", color: "#fff" },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    color: "#000",
+  },
+  result: {
+    fontSize: 18,
+    textAlign: "center",
+    marginTop: 20,
+    fontWeight: "bold",
+    color: "#fff",
+  },
 });

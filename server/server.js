@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const axios = require("axios");
+const Rate = require("./models/Rate"); // backend Mongoose model for exchange rates
 
 const log = (msg) => {
   console.log(msg);
@@ -136,6 +137,101 @@ app.post("/api/user/fund", authenticateToken, async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
+});
+// Buy route- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
+  const { amount, inputCode, targetCode, rate } = req.body;
+
+  if (!amount || !inputCode || !targetCode || !rate) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  // Get input currency balance
+  let inputBalance = inputCode === "PLN"
+    ? user.balance
+    : user.wallet.find(c => c.code === inputCode)?.amount || 0;
+
+  if (inputBalance < amount) {
+    return res.status(400).json({ message: `Insufficient balance in ${inputCode}` });
+  }
+
+  // Convert input currency → PLN
+  let amountInPLN = 0;
+  if (inputCode === "PLN") {
+    amountInPLN = amount;
+  } else {
+    try {
+      const resRates = await axios.get("http://api.nbp.pl/api/exchangerates/tables/A/?format=json");
+      const rates = resRates.data[0].rates;
+      const inputRate = rates.find(r => r.code === inputCode);
+      if (!inputRate) return res.status(404).json({ message: `Rate not found for ${inputCode}` });
+      amountInPLN = amount * inputRate.mid;
+    } catch (err) {
+      return res.status(500).json({ message: "Failed to fetch rates" });
+    }
+  }
+
+  // Convert PLN → target currency
+  const receivedTarget = targetCode === "PLN" ? amountInPLN : amountInPLN / rate;
+
+  // Deduct input currency
+  if (inputCode === "PLN") {
+    user.balance -= amount;
+  } else {
+    const walletItem = user.wallet.find(c => c.code === inputCode);
+    walletItem.amount -= amount;
+  }
+
+  // Add target currency
+  if (targetCode === "PLN") {
+    user.balance += receivedTarget;
+  } else {
+    const targetItem = user.wallet.find(c => c.code === targetCode);
+    if (targetItem) {
+      targetItem.amount += receivedTarget;
+    } else {
+      user.wallet.push({ code: targetCode, amount: receivedTarget });
+    }
+  }
+
+  await user.save();
+
+  res.json({
+    message: "Buy successful",
+    user: {
+      id: user._id,
+      email: user.email,
+      balance: user.balance,
+      wallet: user.wallet,
+    },
+    receivedTarget,
+  });
+});
+
+
+
+// Sell route
+app.post("/api/transaction/sell" , async (req, res) => {
+  const { amountForeign, rate } = req.body;
+
+  if (!amountForeign || !rate) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  const receivedPLN = amountForeign * rate;
+
+  const user = req.user;
+  user.balance += receivedPLN;
+  await user.save();
+
+  res.json({
+    message: "Sell successful",
+    newBalance: user.balance,
+    receivedPLN,
+  });
 });
 
 

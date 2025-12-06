@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ImageBackground ,Image } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { useRouter } from "expo-router";
-import { useAuth } from "../auth";
-import { BACKEND_URL } from "../config";
+import React, { useState } from "react";
+import { Image, ImageBackground, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../../auth";
+import { BACKEND_URL } from "../../config";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -31,7 +31,7 @@ export default function LoginScreen() {
       setError("");
       const res = await axios.post(`${BACKEND_URL}/api/user/login`, { email, password });
       await signIn(res.data.token);
-      router.replace("/HomeScreen");
+      router.replace("/screens/HomeScreen");
     } catch (err:any) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     }
@@ -39,14 +39,14 @@ export default function LoginScreen() {
 
   return (
     <ImageBackground
-      source={require("../assets/images/screen-mobile.jpg")}
+      source={require("../../assets/images/screen-mobile.jpg")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
       <SafeAreaView style={[styles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
         <ScrollView contentContainerStyle={styles.inner}>    
           <Image
-            source={require("../assets/images/logo.png")}
+            source={require("../../assets/images/logo.png")}
             style={styles.logo}
           />    
           <Text style={styles.title}>Welcome Back</Text>
@@ -76,7 +76,7 @@ export default function LoginScreen() {
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/SignUpScreen")}>
+          <TouchableOpacity onPress={() => router.push("/screens/SignUpScreen")}>
             <Text style={styles.link}>Don’t have an account? Sign up</Text>
           </TouchableOpacity>
         </ScrollView>

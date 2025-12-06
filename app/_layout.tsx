@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { AuthProvider, useAuth } from ".././auth";
+import { AuthProvider, useAuth } from "../auth";
 import { View, ActivityIndicator } from "react-native";
 
 function AppStack() {
@@ -17,20 +17,14 @@ function AppStack() {
     <Stack>
       {!token ? (
         <>
-          <Stack.Screen
-            name="screens/LoginScreen"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="screens/SignUpScreen"
-            options={{ headerShown: false }}
-          />
+          <Stack.Screen name="/screens/LoginScreen" options={{ headerShown: false }} />
+          <Stack.Screen name="/screens/SignUpScreen" options={{ headerShown: false }} />
         </>
       ) : (
-        <Stack.Screen
-          name="screens/HomeScreen"
-          options={{ headerShown: false }}
-        />
+        <>
+          <Stack.Screen name="/screens/HomeScreen" options={{ headerShown: false }} />
+          <Stack.Screen name="/screens/HistoricalScreen" options={{ headerShown: false }} />
+        </>
       )}
     </Stack>
   );

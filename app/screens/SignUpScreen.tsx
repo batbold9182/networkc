@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ImageBackground, Image, View } from "react-native";
-import { useRouter } from "expo-router";
 import axios from "axios";
-import { BACKEND_URL } from "../config";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Image, ImageBackground, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BACKEND_URL } from "../../config";
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState("");
@@ -28,7 +28,7 @@ export default function SignUpScreen() {
     try {
       setError("");
       await axios.post(`${BACKEND_URL}/api/user/register`, { email, password });
-      router.replace("/LoginScreen");
+      router.replace("/screens/LoginScreen");
     } catch (err:any) {
       setError(err.response?.data?.message || "Sign up failed. Try again.");
     }
@@ -36,7 +36,7 @@ export default function SignUpScreen() {
 
   return (
     <ImageBackground
-      source={require("../assets/images/screen-mobile.jpg")}
+      source={require("../../assets/images/screen-mobile.jpg")}
       style={{ flex: 1 }}
       resizeMode="cover"
     >
@@ -45,7 +45,7 @@ export default function SignUpScreen() {
 
           {/* Logo */}
           <Image
-            source={require("../assets/images/logo.png")}
+            source={require("../../assets/images/logo.png")}
             style={styles.logo}
           />
 
@@ -79,7 +79,7 @@ export default function SignUpScreen() {
           </TouchableOpacity>
 
           {/* Navigate */}
-          <TouchableOpacity onPress={() => router.push("/LoginScreen")}> 
+          <TouchableOpacity onPress={() => router.push("/screens/LoginScreen")}> 
             <Text style={styles.link}>Already have an account? Log in</Text>
           </TouchableOpacity>
 

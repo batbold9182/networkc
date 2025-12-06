@@ -1,3 +1,4 @@
+// app/index.tsx
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "../auth";
@@ -9,8 +10,9 @@ export default function Index() {
 
   useEffect(() => {
     if (loading) return;
-    if (token) router.replace("/HomeScreen");
-    else router.replace("/LoginScreen");
+
+    if (token) router.replace("/screens/HomeScreen");
+    else router.replace("/screens/LoginScreen");
   }, [loading, token, router]);
 
   return (

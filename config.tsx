@@ -1,8 +1,7 @@
-// config.ts
 import { Platform } from "react-native";
 
 
-const LOCAL_IP = "192.168.10.15";  
+const LOCAL_IP = "192.168.10.20";  
 const PORT = 3001; 
 
 

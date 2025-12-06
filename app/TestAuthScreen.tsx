@@ -1,9 +1,8 @@
-// TestAuthScreen.tsx
 import React, { useState } from "react";
 import { ScrollView, View, Text, TextInput, Button, StyleSheet,  } from "react-native";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
-import { Background } from "@react-navigation/elements";
+
 
 export default function TestAuthScreen() {
   const [email, setEmail] = useState("");

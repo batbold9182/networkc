@@ -27,7 +27,7 @@ export default function AccountFunding({ token, onBalanceUpdate }: Props) {
 
       alert(`Success! New balance: ${res.data.balance} PLN`);
       setFundAmount("");
-      onBalanceUpdate(res.data.balance); // notify parent about balance update
+      onBalanceUpdate(res.data.balance); 
     } catch (err) {
       console.error(err);
       alert("Failed to fund account");
@@ -56,5 +56,5 @@ const styles = StyleSheet.create({
   section: { marginVertical: 10, padding: 10, backgroundColor: "rgba(0,0,0,0.3)", borderRadius: 5 },
   label: { fontSize: 16, marginBottom: 5, color: "#fff" },
   input: { borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 5, color: "#000", backgroundColor: "rgba(255,255,255,0.85)" },
-  button: { color: "#007AFF", marginTop: 10, padding: 15, backgroundColor: "#fff", borderRadius: 50, textAlign: "center", fontSize: 16, fontWeight: "bold" },
+  button: { color: "#fff", marginTop: 10, padding: 15, backgroundColor: "#00cc44", borderRadius: 50, textAlign: "center", fontSize: 16, fontWeight: "bold" },
 });

@@ -53,7 +53,6 @@ export default function CurrencyConverter({
         const plnRate = allRates.find((r) => r.code === "PLN") || null;
         const usdRate = allRates.find((r) => r.code === "USD") || null;
 
-        // >>>>>>> FIX: push defaults to parent
         if (!inputCurrency) onInputCurrencyChange(plnRate);
         if (!selectedRate) onRateChange(usdRate);
       } catch (err) {
@@ -75,9 +74,11 @@ export default function CurrencyConverter({
     const value = parseFloat(amount);
     if (isNaN(value)) return onConvertedChange(null);
 
+    // Convert to PLN using the quoted mid (PLN per 1 unit of input currency)
     const amountInPLN =
-      inputCurrency.code === "PLN" ? value : value / inputCurrency.mid;
+      inputCurrency.code === "PLN" ? value : value * inputCurrency.mid;
 
+    // Then convert PLN to target currency (divide by target mid)
     const result =
       selectedRate.code === "PLN" ? amountInPLN : amountInPLN / selectedRate.mid;
 

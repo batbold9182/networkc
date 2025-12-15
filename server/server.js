@@ -137,51 +137,82 @@ app.post("/api/user/fund", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Withdraw PLN from balance
+app.post("/api/user/withdraw", authenticateToken, async (req, res) => {
+  try {
+    const { amount } = req.body;
+    if (!amount || amount <= 0)
+      return res.status(400).json({ message: "Invalid amount" });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.balance < amount)
+      return res.status(400).json({ message: "Insufficient PLN balance" });
+
+    user.balance -= amount;
+    await user.save();
+
+    res.json({ message: "Withdrawn successfully", balance: user.balance });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 // Buy route- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
-  const { amount, inputCode, targetCode, rate } = req.body;
+  const { amount, inputCode, targetCode } = req.body;
 
-  if (!amount || !inputCode || !targetCode || !rate) {
+  if (!amount || !inputCode || !targetCode) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
   const user = await User.findById(req.user.id);
   if (!user) return res.status(404).json({ message: "User not found" });
 
-  // Get input currency balance
-  let inputBalance = inputCode === "PLN"
-    ? user.balance
-    : user.wallet.find(c => c.code === inputCode)?.amount || 0;
-
-  if (inputBalance < amount) {
-    return res.status(400).json({ message: `Insufficient balance in ${inputCode}` });
-  }
-
-  // Convert input currency → PLN
-  let amountInPLN = 0;
-  if (inputCode === "PLN") {
-    amountInPLN = amount;
-  } else {
+  // Get rates once when either side is not PLN
+  let rates = [];
+  if (inputCode !== "PLN" || targetCode !== "PLN") {
     try {
       const resRates = await axios.get("http://api.nbp.pl/api/exchangerates/tables/A/?format=json");
-      const rates = resRates.data[0].rates;
-      const inputRate = rates.find(r => r.code === inputCode);
-      if (!inputRate) return res.status(404).json({ message: `Rate not found for ${inputCode}` });
-      amountInPLN = amount * inputRate.mid;
+      rates = resRates.data[0].rates;
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Failed to fetch rates" });
     }
   }
 
-  // Convert PLN → target currency
-  const receivedTarget = targetCode === "PLN" ? amountInPLN : amountInPLN / rate;
+  const getMid = (code) => {
+    if (code === "PLN") return 1;
+    const found = rates.find((r) => r.code === code);
+    return found ? found.mid : null;
+  };
+
+  const inputMid = getMid(inputCode);
+  if (inputMid === null) return res.status(404).json({ message: `Rate not found for ${inputCode}` });
+
+  const targetMid = getMid(targetCode);
+  if (targetMid === null) return res.status(404).json({ message: `Rate not found for ${targetCode}` });
+
+  // Get input currency balance
+  const inputBalance = inputCode === "PLN"
+    ? user.balance
+    : user.wallet.find((c) => c.code === inputCode)?.amount || 0;
+
+  if (inputBalance < amount) {
+    return res.status(400).json({ message: `Insufficient balance in ${inputCode}` });
+  }
+
+  // Convert input currency → PLN, then PLN → target currency using server-fetched mid rates
+  const amountInPLN = amount * inputMid;
+  const receivedTarget = amountInPLN / targetMid;
 
   // Deduct input currency
   if (inputCode === "PLN") {
     user.balance -= amount;
   } else {
-    const walletItem = user.wallet.find(c => c.code === inputCode);
+    const walletItem = user.wallet.find((c) => c.code === inputCode);
     walletItem.amount -= amount;
   }
 
@@ -189,7 +220,7 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
   if (targetCode === "PLN") {
     user.balance += receivedTarget;
   } else {
-    const targetItem = user.wallet.find(c => c.code === targetCode);
+    const targetItem = user.wallet.find((c) => c.code === targetCode);
     if (targetItem) {
       targetItem.amount += receivedTarget;
     } else {
@@ -208,7 +239,7 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
       fromCurrency: inputCode,
       toCurrency: targetCode,
       amount,
-      rate,
+      rate: targetMid,
     });
   } catch (e) {
     console.error("Failed to record transaction", e);
@@ -230,16 +261,26 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
 
 
 // Sell route
-app.post("/api/transaction/sell" , async (req, res) => {
-  const { amountForeign, rate } = req.body;
+app.post("/api/transaction/sell", authenticateToken, async (req, res) => {
+  const { amountForeign, rate, code } = req.body;
 
   if (!amountForeign || !rate) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const receivedPLN = amountForeign * rate;
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
 
-  const user = req.user;
+  // Optional: ensure the user has enough of the foreign currency before selling
+  if (code) {
+    const walletEntry = user.wallet.find((c) => c.code === code);
+    if (!walletEntry || walletEntry.amount < amountForeign) {
+      return res.status(400).json({ message: `Insufficient ${code} to sell` });
+    }
+    walletEntry.amount -= amountForeign;
+  }
+
+  const receivedPLN = amountForeign * rate;
   user.balance += receivedPLN;
   await user.save();
 

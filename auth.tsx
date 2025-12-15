@@ -74,6 +74,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(res.data);
     } catch (err) {
       console.error("SignIn error:", err);
+      // Ensure we do not keep an unusable token
+      if (Platform.OS === "web") localStorage.removeItem("token");
+      else await AsyncStorage.removeItem("token");
+      setToken(null);
+      setUser(null);
+      throw err;
     }
   };
 

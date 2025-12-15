@@ -7,6 +7,7 @@ import { ActivityIndicator, ImageBackground, ScrollView, StyleSheet, Text, TextI
 import { useAuth } from "../../auth";
 import { BACKEND_URL } from "../../config";
 
+
 type Rate = {
   currency: string;
   code: string;
@@ -99,7 +100,7 @@ export default function WalletScreen() {
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Wallet</Text>
+        <Text style={styles.title}>Wallet</Text>    
 
         {user && (
           <View style={{ marginBottom: 20 }}>
@@ -170,9 +171,9 @@ export default function WalletScreen() {
         {/* Go to Transactions Screen */}
         <Text
           style={styles.historyButton}
-          onPress={() => router.push("/screens/TransactionsScreen")}
+          onPress={() => router.push("/screens/FundingScreen")}
         >
-          View Transaction History
+          Deposit and withdraw funds
         </Text>
       </ScrollView>
     </ImageBackground>

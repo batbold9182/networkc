@@ -1,17 +1,27 @@
 // api.ts
 import axios from "axios";
-import { BACKEND_URL } from "./config";
+import { useMemo } from "react";
 import { useAuth } from "./auth";
+import { BACKEND_URL } from "./config";
 
 export const useApi = () => {
   const { token } = useAuth();
 
-  const instance = axios.create({
-    baseURL: BACKEND_URL,
-    headers: {
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-  });
+  return useMemo(() => {
+    return axios.create({
+      baseURL: BACKEND_URL,
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
+  }, [token]);
+};
 
-  return instance;
+// Convenience API wrappers
+export const useTransactionsApi = () => {
+  const api = useApi();
+  return useMemo(() => ({
+    list: (params?: { limit?: number; skip?: number }) =>
+      api.get("/api/transactions", { params }),
+  }), [api]);
 };

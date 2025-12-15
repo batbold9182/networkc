@@ -37,7 +37,7 @@ export default function SignUpScreen() {
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
-      style={{ flex: 1 }}
+      style={styles.Background}
       resizeMode="cover"
     >
       <SafeAreaView style={[styles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
@@ -100,4 +100,5 @@ const styles = StyleSheet.create({
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   link: { marginTop: 20, color: "#fff", textAlign: "center", fontSize: 15 },
   error: { color: "#ff8080", marginBottom: 10, textAlign: "center" },
+  Background:{ flex: 1 ,width: '100%', height: '100%' },
 });

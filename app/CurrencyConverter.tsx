@@ -1,6 +1,6 @@
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
 import { BACKEND_URL } from "../config";
 
@@ -34,8 +34,12 @@ export default function CurrencyConverter({
 }: Props) {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loadingRates, setLoadingRates] = useState(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const fetchRates = async () => {
       try {
         const res = await axios.get<Rate[]>(`${BACKEND_URL}/api/rates`);
@@ -60,7 +64,7 @@ export default function CurrencyConverter({
     };
 
     fetchRates();
-  }, []);
+  }, [inputCurrency, selectedRate, onInputCurrencyChange, onRateChange]);
 
   useEffect(() => {
     if (!inputCurrency || !selectedRate || !amount) {
@@ -78,7 +82,7 @@ export default function CurrencyConverter({
       selectedRate.code === "PLN" ? amountInPLN : amountInPLN / selectedRate.mid;
 
     onConvertedChange(result);
-  }, [amount, inputCurrency, selectedRate]);
+  }, [amount, inputCurrency, selectedRate, onConvertedChange]);
 
   return (
     <View style={styles.section}>
@@ -93,14 +97,14 @@ export default function CurrencyConverter({
 
       <Text style={styles.label}>Input Currency:</Text>
       {loadingRates ? (
-        <ActivityIndicator size="small" color="#fff" />
+        <ActivityIndicator size="small" color="#000000ff" />
       ) : (
         <Picker
           selectedValue={inputCurrency?.code}
           onValueChange={(c) =>
             onInputCurrencyChange(rates.find((r) => r.code === c) || null)
           }
-          style={{ color: "#fff" }}
+          style={{ color: "#000000ff" }}
         >
           {rates.map((r) => (
             <Picker.Item
@@ -114,14 +118,14 @@ export default function CurrencyConverter({
 
       <Text style={styles.label}>Target Currency:</Text>
       {loadingRates ? (
-        <ActivityIndicator size="small" color="#fff" />
+        <ActivityIndicator size="small" color="#000000ff" />
       ) : (
         <Picker
           selectedValue={selectedRate?.code}
           onValueChange={(c) =>
             onRateChange(rates.find((r) => r.code === c) || null)
           }
-          style={{ color: "#fff" }}
+          style={{ color: "#000000ff" }}
         >
           {rates.map((r) => (
             <Picker.Item

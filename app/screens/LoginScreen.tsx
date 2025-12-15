@@ -40,7 +40,7 @@ export default function LoginScreen() {
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
-      style={{ flex: 1 }}
+      style={styles.Background}
       resizeMode="cover"
     >
       <SafeAreaView style={[styles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
@@ -139,4 +139,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
+  Background:{
+    flex: 1 ,
+    width: '100%',
+    height: '100%'
+  }
 });

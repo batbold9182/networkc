@@ -5,8 +5,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const axios = require("axios");
-const Rate = require("./models/Rate"); // backend Mongoose model for exchange rates
-
+const Transaction = require("./models/Transaction");
 const log = (msg) => {
   console.log(msg);
   console.error(msg);
@@ -46,7 +45,7 @@ mongoose
 
 const JWT_SECRET = "your_secret_key_here";
 
-// Add this **before** all other routes
+// Note: Do not execute DB writes at top-level during startup.
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong" });
 });
@@ -170,6 +169,7 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
       if (!inputRate) return res.status(404).json({ message: `Rate not found for ${inputCode}` });
       amountInPLN = amount * inputRate.mid;
     } catch (err) {
+      console.error(err);
       return res.status(500).json({ message: "Failed to fetch rates" });
     }
   }
@@ -199,6 +199,21 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
 
   await user.save();
 
+  // Record transaction
+  let transaction = null;
+  try {
+    transaction = await Transaction.create({
+      userId: user._id,
+      type: "BUY",
+      fromCurrency: inputCode,
+      toCurrency: targetCode,
+      amount,
+      rate,
+    });
+  } catch (e) {
+    console.error("Failed to record transaction", e);
+  }
+
   res.json({
     message: "Buy successful",
     user: {
@@ -208,6 +223,7 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
       wallet: user.wallet,
     },
     receivedTarget,
+    transaction,
   });
 });
 
@@ -260,6 +276,27 @@ app.get("/api/user", authenticateToken, async (req, res) => {
     console.error(err);
   }
 
+});
+
+// Get transaction history (paginated)
+app.get("/api/transactions", authenticateToken, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const skip = parseInt(req.query.skip) || 0;
+
+    const [items, total] = await Promise.all([
+      Transaction.find({ userId: req.user.id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Transaction.countDocuments({ userId: req.user.id }),
+    ]);
+
+    res.json({ items, total, limit, skip });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch transactions" });
+  }
 });
 
 

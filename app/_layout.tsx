@@ -1,9 +1,9 @@
 import { Stack } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "../auth";
-import { View, ActivityIndicator } from "react-native";
 
 function AppStack() {
-  const { token, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,18 +14,24 @@ function AppStack() {
   }
 
   return (
-    <Stack>
-      {!token ? (
-        <>
-          <Stack.Screen name="/screens/LoginScreen" options={{ headerShown: false }} />
-          <Stack.Screen name="/screens/SignUpScreen" options={{ headerShown: false }} />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="/screens/HomeScreen" options={{ headerShown: false }} />
-          <Stack.Screen name="/screens/HistoricalScreen" options={{ headerShown: false }} />
-        </>
-      )}
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: "#0a0a0a" },
+        headerTintColor: "#fff",
+        headerTitleStyle: { color: "#fff" },
+      }}
+    >
+      {/* Auth screens */}
+      <Stack.Screen name="screens/LoginScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="screens/SignUpScreen" options={{ title: "Sign Up" }} />
+
+      {/* App screens */}
+      <Stack.Screen name="screens/HomeScreen" options={{ headerShown: false }} />
+      <Stack.Screen name="screens/WalletScreen" options={{ title: "Wallet" }} />
+      <Stack.Screen name="screens/ConverterScreen" options={{ title: "Converter" }} />
+      <Stack.Screen name="screens/HistoricalScreen" options={{ title: "Historical Rates" }} />
+      <Stack.Screen name="screens/FundingScreen" options={{ title: "Fund Account" }} />
+      <Stack.Screen name="screens/TransactionsScreen" options={{ title: "Transactions" }} />
     </Stack>
   );
 }

@@ -1,8 +1,9 @@
 // WalletScreen.tsx
-import React, { useEffect, useState } from "react";
-import { ImageBackground, ScrollView, StyleSheet, Text, View, TextInput, ActivityIndicator } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, ImageBackground, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useAuth } from "../../auth";
 import { BACKEND_URL } from "../../config";
 
@@ -14,6 +15,7 @@ type Rate = {
 
 export default function WalletScreen() {
   const { token, user, setUser } = useAuth();
+  const router = useRouter();
   const [rates, setRates] = useState<Rate[]>([]);
   const [loadingRates, setLoadingRates] = useState(true);
 
@@ -21,9 +23,14 @@ export default function WalletScreen() {
   const [inputCurrency, setInputCurrency] = useState<Rate | null>(null);
   const [targetCurrency, setTargetCurrency] = useState<Rate | null>(null);
   const [converted, setConverted] = useState<number | null>(null);
+  const hasFetched = useRef(false);
+  
 
   // Fetch rates from NBP API
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
     const fetchRates = async () => {
       try {
         const res = await axios.get<Rate[]>(`${BACKEND_URL}/api/rates`);
@@ -39,7 +46,7 @@ export default function WalletScreen() {
       }
     };
     fetchRates();
-  }, []);
+  }, [inputCurrency, targetCurrency]);
 
   // Compute conversion
   useEffect(() => {
@@ -88,7 +95,7 @@ export default function WalletScreen() {
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
-      style={{ flex: 1 }}
+      style={styles.Background}
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -124,7 +131,7 @@ export default function WalletScreen() {
           <Picker
             selectedValue={inputCurrency?.code}
             onValueChange={code => setInputCurrency(rates.find(r => r.code === code) || null)}
-            style={{ color: "#fff" }}
+            style={{ color: "#000000ff" }}
           >
             {rates.map(r => (
               <Picker.Item key={r.code} label={`${r.code} (${r.currency})`} value={r.code} />
@@ -140,7 +147,7 @@ export default function WalletScreen() {
           <Picker
             selectedValue={targetCurrency?.code}
             onValueChange={code => setTargetCurrency(rates.find(r => r.code === code) || null)}
-            style={{ color: "#fff" }}
+            style={{ color: "#000000ff" }}
           >
             {rates.map(r => (
               <Picker.Item key={r.code} label={`${r.code} (${r.currency})`} value={r.code} />
@@ -159,6 +166,14 @@ export default function WalletScreen() {
         <Text style={styles.buyButton} onPress={buyCurrency}>
           Buy Currency
         </Text>
+
+        {/* Go to Transactions Screen */}
+        <Text
+          style={styles.historyButton}
+          onPress={() => router.push("/screens/TransactionsScreen")}
+        >
+          View Transaction History
+        </Text>
       </ScrollView>
     </ImageBackground>
   );
@@ -172,4 +187,6 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 5, color: "#000", backgroundColor: "rgba(255,255,255,0.85)" },
   result: { fontSize: 18, textAlign: "center", marginTop: 15, fontWeight: "bold", color: "#fff" },
   buyButton: { marginTop: 20, padding: 15, backgroundColor: "#00cc44", borderRadius: 40, textAlign: "center", color: "#fff", fontSize: 18, fontWeight: "bold" },
+  historyButton: { marginTop: 15, padding: 12, borderRadius: 30, textAlign: "center", color: "#fff", fontSize: 16, borderWidth: 1, borderColor: "#fff" },
+  Background:{ flex: 1 ,width: '100%', height: '100%' },
 });

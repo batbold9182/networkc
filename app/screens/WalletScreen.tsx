@@ -3,10 +3,12 @@ import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, ImageBackground, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, ImageBackground, ScrollView, Text, TextInput, View } from "react-native";
 import { useAuth } from "../../auth";
 import { BACKEND_URL } from "../../config";
-
+//  WalletScreenStyles as styles can import like this noted XD
+import { WalletScreenStyles as styles} from "./Styles";
+import { sellCurrency } from "../../api";
 
 type Rate = {
   currency: string;
@@ -26,7 +28,9 @@ export default function WalletScreen() {
   const [converted, setConverted] = useState<number | null>(null);
   const hasFetched = useRef(false);
   
-
+  const [sellAmount, setSellAmount] = useState("");
+  const [sellCurrencyCode, setSellCurrencyCode] = useState<string>(""); // renamed
+  const [sellLoading, setSellLoading] = useState(false);
   // Fetch rates from NBP API
   useEffect(() => {
     if (hasFetched.current) return;
@@ -48,6 +52,12 @@ export default function WalletScreen() {
     };
     fetchRates();
   }, [inputCurrency, targetCurrency]);
+
+  useEffect(() => {
+    if (user?.wallet?.length && !sellCurrencyCode) {
+      setSellCurrencyCode(user.wallet[0].code);
+    }
+  }, [user?.wallet, sellCurrencyCode]); 
 
   // Compute conversion
   useEffect(() => {
@@ -93,6 +103,49 @@ export default function WalletScreen() {
   }
 };
 
+const handleSellCurrency = async () => {
+  if (!sellCurrencyCode || !sellAmount) {
+    return alert("Please select currency and enter amount to sell.");
+  }
+  const amountNum = parseFloat(sellAmount);
+  if (isNaN(amountNum) || amountNum <= 0) return alert("Invalid amount.");
+
+  const rate = rates.find(r => r.code === sellCurrencyCode)?.mid;
+  if (!rate) return alert("Invalid currency selected.");
+
+  // Check wallet balance before API call
+  const walletEntry = user?.wallet?.find(w => w.code === sellCurrencyCode);
+  if (!walletEntry || walletEntry.amount < amountNum) {
+    return alert(`Insufficient ${sellCurrencyCode} balance.`);
+  }
+
+  setSellLoading(true);
+  try {
+    // Correct parameter order: token, amountForeign, rate, code
+    const res = await sellCurrency(token!, amountNum, rate, sellCurrencyCode);
+    if (res.message === "Sell successful") {
+      setUser(res.user);
+      setSellAmount("");
+      alert(`Sold ${amountNum} ${sellCurrencyCode} for ${res.receivedPLN.toFixed(2)} PLN`);
+    } else {
+      alert(res.message || "Sell failed");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Sell failed due to an error.");
+  } finally {
+    setSellLoading(false);
+  }
+};
+
+const getSellEstimate = () => {
+    const amountNum = parseFloat(sellAmount);
+    const rate = rates.find(r => r.code === sellCurrencyCode)?.mid;
+    if (!isNaN(amountNum) && rate && amountNum > 0) {
+      return (amountNum * rate).toFixed(2);
+    }
+    return null;
+  };
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
@@ -167,6 +220,54 @@ export default function WalletScreen() {
         <Text style={styles.buyButton} onPress={buyCurrency}>
           Buy Currency
         </Text>
+        {/* ===== SELL SECTION ===== */}
+          <View style={{ marginTop: 30 }}>
+            <Text style={[styles.label, { fontWeight: "bold", fontSize: 18 }]}>Sell Currency → PLN</Text>
+
+            {user?.wallet?.length ? (
+              <>
+                <Text style={styles.label}>Select Currency to Sell:</Text>
+                <Picker
+                  selectedValue={sellCurrencyCode}
+                  onValueChange={code => setSellCurrencyCode(code)}
+                  style={{ color: "#000000ff" }}
+                >
+                  {user.wallet.map(w => (
+                    <Picker.Item
+                      key={w.code}
+                      label={`${w.code} (Balance: ${w.amount.toFixed(2)})`}
+                      value={w.code}
+                    />
+                  ))}
+                </Picker>
+
+                <Text style={styles.label}>Amount to Sell:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter amount"
+                  placeholderTextColor="#999"
+                  keyboardType="numeric"
+                  value={sellAmount}
+                  onChangeText={setSellAmount}
+                />
+
+                {getSellEstimate() && (
+                  <Text style={styles.result}>
+                    You will receive ~{getSellEstimate()} PLN
+                  </Text>
+                )}
+
+                <Text
+                  style={[styles.buyButton, { backgroundColor: "#e74c3c" }]}
+                  onPress={handleSellCurrency}
+                >
+                  {sellLoading ? "Selling..." : "Sell Currency"}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.info}>No currencies in wallet to sell.</Text>
+            )}
+          </View>
 
         {/* Go to Transactions Screen */}
         <Text
@@ -180,14 +281,3 @@ export default function WalletScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, justifyContent: "center" },
-  title: { fontSize: 26, textAlign: "center", color: "#fff", marginBottom: 10, fontWeight: "bold" },
-  info: { fontSize: 18, textAlign: "center", marginBottom: 5, color: "#fff" },
-  label: { fontSize: 16, marginTop: 10, marginBottom: 5, color: "#fff" },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 5, color: "#000", backgroundColor: "rgba(255,255,255,0.85)" },
-  result: { fontSize: 18, textAlign: "center", marginTop: 15, fontWeight: "bold", color: "#fff" },
-  buyButton: { marginTop: 20, padding: 15, backgroundColor: "#00cc44", borderRadius: 40, textAlign: "center", color: "#fff", fontSize: 18, fontWeight: "bold" },
-  historyButton: { marginTop: 15, padding: 12, borderRadius: 30, textAlign: "center", color: "#fff", fontSize: 16, borderWidth: 1, borderColor: "#fff" },
-  Background:{ flex: 1 ,width: '100%', height: '100%' },
-});

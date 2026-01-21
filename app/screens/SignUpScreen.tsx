@@ -1,10 +1,10 @@
 import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, ImageBackground, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from "react-native";
+import { Image, ImageBackground, ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BACKEND_URL } from "../../config";
-
+import { SignUpScreenStyles } from "./Styles";
 export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,27 +37,26 @@ export default function SignUpScreen() {
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
-      style={styles.Background}
+      style={SignUpScreenStyles.Background}
       resizeMode="cover"
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
-        <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
+      <SafeAreaView style={[SignUpScreenStyles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
+        <ScrollView contentContainerStyle={SignUpScreenStyles.inner} keyboardShouldPersistTaps="handled">
 
           {/* Logo */}
           <Image
             source={require("../../assets/images/logo.png")}
-            style={styles.logo}
+            style={SignUpScreenStyles.logo}
           />
 
-          <Text style={styles.title}>Sign Up</Text>
-          <Text style={styles.subtitle}>Create your account</Text>
-
+          <Text style={SignUpScreenStyles.title}>Sign Up</Text>
+          <Text style={SignUpScreenStyles.subtitle}>Create your account</Text>
           {/* Inputs */}
           <TextInput
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
-            style={[styles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
+            style={[SignUpScreenStyles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
             placeholderTextColor="#999"
             autoCapitalize="none"
           />
@@ -67,20 +66,19 @@ export default function SignUpScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            style={[styles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
+            style={[SignUpScreenStyles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
             placeholderTextColor="#999"
           />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-
+          {error ? <Text style={SignUpScreenStyles.error}>{error}</Text> : null}
           {/* Button */}
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-            <Text style={styles.buttonText}>Sign Up</Text>
+          <TouchableOpacity style={SignUpScreenStyles.button} onPress={handleSignUp}>
+            <Text style={SignUpScreenStyles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
 
           {/* Navigate */}
           <TouchableOpacity onPress={() => router.push("/screens/LoginScreen")}> 
-            <Text style={styles.link}>Already have an account? Log in</Text>
+            <Text style={SignUpScreenStyles.link}>Already have an account? Log in</Text>
           </TouchableOpacity>
 
         </ScrollView>
@@ -88,17 +86,3 @@ export default function SignUpScreen() {
     </ImageBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  logo:{ width: 120, height: 120, resizeMode: "contain", alignSelf: "center", marginBottom: 20 },
-  container: { flex: 1 },
-  inner: { padding: 20, justifyContent: "center" },
-  title: { fontSize: 32, fontWeight: "700", marginBottom: 10, textAlign: "center", color: "#fff" },
-  subtitle: { fontSize: 16, color: "#eee", marginBottom: 30, textAlign: "center" },
-  input: { height: 50, borderWidth: 1, borderColor: "#ddd", borderRadius: 12, paddingHorizontal: 15, marginBottom: 15, fontSize: 16 },
-  button: { backgroundColor: "#007AFF", paddingVertical: 14, borderRadius: 12, alignItems: "center", marginTop: 10 },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  link: { marginTop: 20, color: "#fff", textAlign: "center", fontSize: 15 },
-  error: { color: "#ff8080", marginBottom: 10, textAlign: "center" },
-  Background:{ flex: 1 ,width: '100%', height: '100%' },
-});

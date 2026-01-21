@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ImageBackground, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, ImageBackground, RefreshControl, Text, View } from "react-native";
 import { useTransactionsApi } from "../../api";
 import { useAuth } from "../../auth";
+import { TransactionsScreenStyles as styles } from "./Styles";
 
 export default function TransactionsScreen() {
   const { token } = useAuth();
@@ -38,16 +39,16 @@ export default function TransactionsScreen() {
   }, [load]);
 
   const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.txItem}>
-      <Text style={styles.txMain}>
-        {item.type === "BUY" ? "Buy" : item.type} {item.fromCurrency}
-        {" -> "}
-        {item.toCurrency}
-      </Text>
-      <Text style={styles.txMeta}>Amount: {item.amount} @ {item.rate}</Text>
-      <Text style={styles.txMeta}>{new Date(item.createdAt).toLocaleString()}</Text>
-    </View>
-  );
+  <View style={styles.txItem}>
+    <Text style={styles.txMain}>
+      {item.type === "BUY" ? "Bought" : "Sold"} {item.amount.toFixed(2)} {item.fromCurrency}
+      {" → "}
+      {item.toCurrency}
+    </Text>
+    <Text style={styles.txMeta}>Rate: {item.rate}</Text>
+    <Text style={styles.txMeta}>{new Date(item.createdAt).toLocaleString()}</Text>
+  </View>
+);
 
   return (
     <ImageBackground
@@ -87,13 +88,3 @@ export default function TransactionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 26, textAlign: "center", color: "#fff", marginBottom: 10, fontWeight: "bold" },
-  info: { fontSize: 18, textAlign: "center", marginTop: 20, color: "#fff" },
-  txItem: { padding: 12, borderRadius: 8, backgroundColor: "rgba(0,0,0,0.35)", marginBottom: 10 },
-  txMain: { fontSize: 16, color: "#fff", fontWeight: "600" },
-  txMeta: { fontSize: 13, color: "#ddd" },
-  loadMore: { marginTop: 10, textAlign: "center", color: "#fff", padding: 10, borderWidth: 1, borderColor: "#fff", borderRadius: 20 },
-  Background:{ flex: 1 ,width: '100%', height: '100%' },
-});

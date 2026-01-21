@@ -3,9 +3,9 @@ import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Button, ImageBackground, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Button, ImageBackground, ScrollView, Text, View } from "react-native";
 import { BACKEND_URL } from "../../config";
-
+import { HistoricalScreenStyles } from "./Styles";
 type HistoricalRate = {
   effectiveDate: string;
   mid: number;
@@ -79,12 +79,12 @@ export default function HistoricalScreen(props: Props) {
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
-      style={styles.Background}
+      style={HistoricalScreenStyles.Background}
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={{ padding: 10 }}>
-        <View style={styles.container}>
-          <Text style={styles.label}>Historical Rates</Text>
+        <View style={HistoricalScreenStyles.container}>
+          <Text style={HistoricalScreenStyles.label}>Historical Rates</Text>
 
           {/* Currency Picker */}
           {loadingRates ? (
@@ -139,10 +139,10 @@ export default function HistoricalScreen(props: Props) {
           {loading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : historicalRates.length === 0 ? (
-            <Text style={styles.noData}>No historical data</Text>
+            <Text style={HistoricalScreenStyles.noData}>No historical data</Text>
           ) : (
             historicalRates.map((rate) => (
-              <Text key={rate.effectiveDate} style={styles.rateText}>
+              <Text key={rate.effectiveDate} style={HistoricalScreenStyles.rateText}>
                 {rate.effectiveDate}: {rate.mid.toFixed(4)} PLN
               </Text>
             ))
@@ -153,20 +153,4 @@ export default function HistoricalScreen(props: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  Background: { flex: 1, width: "100%", height: "100%" },
-  container: {
-    marginVertical: 10,
-    padding: 10,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: 5,
-  },
-  label: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  rateText: { color: "#fff", marginVertical: 2 },
-  noData: { color: "#fff", fontStyle: "italic" },
-});
+

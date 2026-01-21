@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { ImageBackground, ScrollView, StyleSheet, Text } from "react-native";
+import { ImageBackground, ScrollView, Text } from "react-native";
 import { useAuth } from "../../auth";
 import CurrencyConverter, { Rate } from "../CurrencyConverter";
-
+import { ConverterScreenStyles } from "./Styles";
 export default function ConverterScreen() {
   const { token } = useAuth();
 
@@ -14,11 +14,11 @@ export default function ConverterScreen() {
   return (
     <ImageBackground
       source={require("../../assets/images/screen-mobile.jpg")}
-      style={styles.Background}
+      style={ConverterScreenStyles.Background}
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={{ fontSize: 22, color: "#fff", marginBottom: 20 }}>
+        <Text style={ConverterScreenStyles.Text}>
           Currency Converter
         </Text>
 
@@ -38,6 +38,3 @@ export default function ConverterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  Background: { flex: 1, width: "100%", height: "100%" },
-});

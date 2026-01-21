@@ -1,4 +1,4 @@
-
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -27,7 +27,9 @@ app.use(express.json());
 
 log("Express configured");
 
-const PORT = 3001;  
+const PORT = process.env.PORT || 3001;  
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 const server = app.listen(PORT, () => {
   log(`✅ Server listening on port ${PORT}`);
@@ -39,11 +41,10 @@ server.on("error", (err) => {
 
 log("Connecting to MongoDB...");
 mongoose
-  .connect("mongodb://127.0.0.1:27017/networkc")
+  .connect(process.env.MONGODB_URI)
   .then(() => log("✅ MongoDB connected"))
   .catch((err) => log(`❌ MongoDB error: ${err.message}`));
 
-const JWT_SECRET = "your_secret_key_here";
 
 // Note: Do not execute DB writes at top-level during startup.
 app.get("/api/ping", (req, res) => {
@@ -51,7 +52,7 @@ app.get("/api/ping", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("🔥 Backend API is running! 🔥1111");
+  res.send("Backend API is running");
 
 
 });
@@ -160,7 +161,58 @@ app.post("/api/user/withdraw", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
-// Buy route- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+// Sell route
+app.post("/api/transaction/sell", authenticateToken, async (req, res) => {
+  const { amountForeign, rate, code } = req.body;
+
+  if (!amountForeign || !rate || !code) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  // Ensure the user has enough of the foreign currency before selling
+  const walletEntry = user.wallet.find((c) => c.code === code);
+  if (!walletEntry || walletEntry.amount < amountForeign) {
+    return res.status(400).json({ message: `Insufficient ${code} to sell` });
+  }
+  walletEntry.amount -= amountForeign;
+
+  const receivedPLN = amountForeign * rate;
+  user.balance += receivedPLN;
+  await user.save();
+
+  // Record SELL transaction
+  let transaction = null;
+  try {
+    transaction = await Transaction.create({
+      userId: user._id,
+      type: "SELL",
+      fromCurrency: code,
+      toCurrency: "PLN",
+      amount: amountForeign,
+      rate: rate,
+    });
+  } catch (e) {
+    console.error("Failed to record transaction", e);
+  }
+
+  res.json({
+    message: "Sell successful",
+    newBalance: user.balance,
+    receivedPLN,
+    user: {
+      id: user._id,
+      email: user.email,
+      balance: user.balance,
+      wallet: user.wallet,
+    },
+    transaction,
+  });
+});
+
+// Buy route
 app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
   const { amount, inputCode, targetCode } = req.body;
 
@@ -259,37 +311,6 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
 });
 
 
-
-// Sell route
-app.post("/api/transaction/sell", authenticateToken, async (req, res) => {
-  const { amountForeign, rate, code } = req.body;
-
-  if (!amountForeign || !rate) {
-    return res.status(400).json({ message: "Missing required fields" });
-  }
-
-  const user = await User.findById(req.user.id);
-  if (!user) return res.status(404).json({ message: "User not found" });
-
-  // Optional: ensure the user has enough of the foreign currency before selling
-  if (code) {
-    const walletEntry = user.wallet.find((c) => c.code === code);
-    if (!walletEntry || walletEntry.amount < amountForeign) {
-      return res.status(400).json({ message: `Insufficient ${code} to sell` });
-    }
-    walletEntry.amount -= amountForeign;
-  }
-
-  const receivedPLN = amountForeign * rate;
-  user.balance += receivedPLN;
-  await user.save();
-
-  res.json({
-    message: "Sell successful",
-    newBalance: user.balance,
-    receivedPLN,
-  });
-});
 
 
 // Middleware to verify token

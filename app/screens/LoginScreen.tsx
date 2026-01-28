@@ -1,11 +1,18 @@
 import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, ImageBackground, ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  Image,
+  ImageBackground,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../auth";
 import { BACKEND_URL } from "../../config";
-import { LoginScreenStyles } from "./Styles";
+import { LoginScreenStyles } from "../../styles/Styles";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,11 +36,16 @@ export default function LoginScreen() {
     if (!validate()) return;
     try {
       setError("");
-      const res = await axios.post(`${BACKEND_URL}/api/user/login`, { email, password });
+      const res = await axios.post(`${BACKEND_URL}/api/user/login`, {
+        email,
+        password,
+      });
       await signIn(res.data.token);
       router.replace("/screens/HomeScreen");
-    } catch (err:any) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || "Login failed. Please try again.",
+      );
     }
   };
 
@@ -43,12 +55,17 @@ export default function LoginScreen() {
       style={LoginScreenStyles.Background}
       resizeMode="cover"
     >
-      <SafeAreaView style={[LoginScreenStyles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
-        <ScrollView contentContainerStyle={LoginScreenStyles.inner}>    
+      <SafeAreaView
+        style={[
+          LoginScreenStyles.container,
+          { backgroundColor: "rgba(0,0,0,0.4)" },
+        ]}
+      >
+        <ScrollView contentContainerStyle={LoginScreenStyles.inner}>
           <Image
             source={require("../../assets/images/logo.png")}
             style={LoginScreenStyles.logo}
-          />    
+          />
           <Text style={LoginScreenStyles.title}>Welcome Back</Text>
           <Text style={LoginScreenStyles.subtitle}>Login to your account</Text>
 
@@ -56,7 +73,10 @@ export default function LoginScreen() {
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
-            style={[LoginScreenStyles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
+            style={[
+              LoginScreenStyles.input,
+              { backgroundColor: "rgba(255,255,255,0.85)" },
+            ]}
             placeholderTextColor="#999"
             autoCapitalize="none"
           />
@@ -66,17 +86,27 @@ export default function LoginScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            style={[LoginScreenStyles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
+            style={[
+              LoginScreenStyles.input,
+              { backgroundColor: "rgba(255,255,255,0.85)" },
+            ]}
             placeholderTextColor="#999"
           />
 
           {error ? <Text style={LoginScreenStyles.error}>{error}</Text> : null}
-          <TouchableOpacity style={LoginScreenStyles.button} onPress={handleLogin}>
+          <TouchableOpacity
+            style={LoginScreenStyles.button}
+            onPress={handleLogin}
+          >
             <Text style={LoginScreenStyles.buttonText}>Login</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/screens/SignUpScreen")}>
-            <Text style={LoginScreenStyles.link}>Don’t have an account? Sign up</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/screens/SignUpScreen")}
+          >
+            <Text style={LoginScreenStyles.link}>
+              Don’t have an account? Sign up
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

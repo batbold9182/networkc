@@ -1,7 +1,7 @@
 {
   "expo": {
     "extra": {
-      "backendUrl": "http://192.168.10.11:3001"
+      "backendUrl": "http://192.168.10.23:3001"
     },
     "name": "currency-converter by Batbold",
     "slug": "networkc",

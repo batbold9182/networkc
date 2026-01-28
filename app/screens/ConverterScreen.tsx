@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { ImageBackground, ScrollView, Text } from "react-native";
 import { useAuth } from "../../auth";
+import { ConverterScreenStyles } from "../../styles/Styles";
 import CurrencyConverter, { Rate } from "../CurrencyConverter";
-import { ConverterScreenStyles } from "./Styles";
 export default function ConverterScreen() {
   const { token } = useAuth();
 
@@ -18,9 +18,7 @@ export default function ConverterScreen() {
       resizeMode="cover"
     >
       <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={ConverterScreenStyles.Text}>
-          Currency Converter
-        </Text>
+        <Text style={ConverterScreenStyles.Text}>Currency Converter</Text>
 
         <CurrencyConverter
           token={token}
@@ -37,4 +35,3 @@ export default function ConverterScreen() {
     </ImageBackground>
   );
 }
-

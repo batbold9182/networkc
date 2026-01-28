@@ -1,7 +1,13 @@
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { BACKEND_URL } from "../config";
 
 export type Rate = {
@@ -55,8 +61,8 @@ export default function CurrencyConverter({
 
         if (!inputCurrency) onInputCurrencyChange(plnRate);
         if (!selectedRate) onRateChange(usdRate);
-      } catch (err) {
-        console.error("Failed to fetch rates:", err);
+      } catch {
+        // Failed to fetch rates
       } finally {
         setLoadingRates(false);
       }
@@ -80,7 +86,9 @@ export default function CurrencyConverter({
 
     // Then convert PLN to target currency (divide by target mid)
     const result =
-      selectedRate.code === "PLN" ? amountInPLN : amountInPLN / selectedRate.mid;
+      selectedRate.code === "PLN"
+        ? amountInPLN
+        : amountInPLN / selectedRate.mid;
 
     onConvertedChange(result);
   }, [amount, inputCurrency, selectedRate, onConvertedChange]);
@@ -140,8 +148,8 @@ export default function CurrencyConverter({
 
       {converted !== null && (
         <Text style={styles.result}>
-          {amount} {inputCurrency?.code} ={" "}
-          {converted.toFixed(2)} {selectedRate?.code}
+          {amount} {inputCurrency?.code} = {converted.toFixed(2)}{" "}
+          {selectedRate?.code}
         </Text>
       )}
     </View>

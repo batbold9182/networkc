@@ -6,12 +6,6 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const axios = require("axios");
 const Transaction = require("./models/Transaction");
-const log = (msg) => {
-  console.log(msg);
-  console.error(msg);
-};
-
-log("Starting server...");
 
 const app = express();
 
@@ -24,45 +18,37 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json());
 
-
-log("Express configured");
-
-const PORT = process.env.PORT || 3001;  
+const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-
 const server = app.listen(PORT, () => {
-  log(`✅ Server listening on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
 
 server.on("error", (err) => {
-  log(`❌ Server error: ${err.message}`);
+  console.log(`Server error: ${err.message}`);
 });
 
-log("Connecting to MongoDB...");
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => log("✅ MongoDB connected"))
-  .catch((err) => log(`❌ MongoDB error: ${err.message}`));
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.log(`MongoDB error: ${err.message}`));
 
-
-// Note: Do not execute DB writes at top-level during startup.
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong" });
 });
 
 app.get("/", (req, res) => {
   res.send("Backend API is running");
-
-
 });
 app.get("/api/rates", async (req, res) => {
   try {
-    const response = await axios.get("http://api.nbp.pl/api/exchangerates/tables/A/?format=json");
+    const response = await axios.get(
+      "http://api.nbp.pl/api/exchangerates/tables/A/?format=json",
+    );
     const rates = response.data[0].rates;
     res.json(rates);
-  } catch (err) {
-    console.error(err);
+  } catch {
     res.status(500).json({ message: "Failed to fetch exchange rates" });
   }
 });
@@ -80,19 +66,17 @@ app.get("/api/historical/:currency/:start/:end", async (req, res) => {
     }
 
     res.json(response.data.rates); // Send only the rates array
-  } catch (err) {
-    console.error(err);
+  } catch {
     res.status(500).json({ message: "Failed to fetch historical rates" });
   }
 });
-
 
 // Register route
 app.post("/api/user/register", async (req, res) => {
   try {
     const { email, password } = req.body;
     const existingUser = await User.findOne({ email });
-    
+
     if (existingUser)
       return res.status(400).json({ message: "Email already in use" });
 
@@ -100,8 +84,7 @@ app.post("/api/user/register", async (req, res) => {
     await user.save();
 
     res.status(201).json({ message: "User registered successfully" });
-  } catch (err) {
-    console.error(err);
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -133,8 +116,7 @@ app.post("/api/user/fund", authenticateToken, async (req, res) => {
     await user.save();
 
     res.json({ message: "Account funded successfully", balance: user.balance });
-  } catch (err) {
-    console.error(err);
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -156,8 +138,7 @@ app.post("/api/user/withdraw", authenticateToken, async (req, res) => {
     await user.save();
 
     res.json({ message: "Withdrawn successfully", balance: user.balance });
-  } catch (err) {
-    console.error(err);
+  } catch {
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -194,9 +175,7 @@ app.post("/api/transaction/sell", authenticateToken, async (req, res) => {
       amount: amountForeign,
       rate: rate,
     });
-  } catch (e) {
-    console.error("Failed to record transaction", e);
-  }
+  } catch {}
 
   res.json({
     message: "Sell successful",
@@ -227,10 +206,11 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
   let rates = [];
   if (inputCode !== "PLN" || targetCode !== "PLN") {
     try {
-      const resRates = await axios.get("http://api.nbp.pl/api/exchangerates/tables/A/?format=json");
+      const resRates = await axios.get(
+        "http://api.nbp.pl/api/exchangerates/tables/A/?format=json",
+      );
       rates = resRates.data[0].rates;
-    } catch (err) {
-      console.error(err);
+    } catch {
       return res.status(500).json({ message: "Failed to fetch rates" });
     }
   }
@@ -242,18 +222,25 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
   };
 
   const inputMid = getMid(inputCode);
-  if (inputMid === null) return res.status(404).json({ message: `Rate not found for ${inputCode}` });
+  if (inputMid === null)
+    return res.status(404).json({ message: `Rate not found for ${inputCode}` });
 
   const targetMid = getMid(targetCode);
-  if (targetMid === null) return res.status(404).json({ message: `Rate not found for ${targetCode}` });
+  if (targetMid === null)
+    return res
+      .status(404)
+      .json({ message: `Rate not found for ${targetCode}` });
 
   // Get input currency balance
-  const inputBalance = inputCode === "PLN"
-    ? user.balance
-    : user.wallet.find((c) => c.code === inputCode)?.amount || 0;
+  const inputBalance =
+    inputCode === "PLN"
+      ? user.balance
+      : user.wallet.find((c) => c.code === inputCode)?.amount || 0;
 
   if (inputBalance < amount) {
-    return res.status(400).json({ message: `Insufficient balance in ${inputCode}` });
+    return res
+      .status(400)
+      .json({ message: `Insufficient balance in ${inputCode}` });
   }
 
   // Convert input currency → PLN, then PLN → target currency using server-fetched mid rates
@@ -293,9 +280,7 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
       amount,
       rate: targetMid,
     });
-  } catch (e) {
-    console.error("Failed to record transaction", e);
-  }
+  } catch {}
 
   res.json({
     message: "Buy successful",
@@ -310,9 +295,6 @@ app.post("/api/transaction/buy", authenticateToken, async (req, res) => {
   });
 });
 
-
-
-
 // Middleware to verify token
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -326,18 +308,15 @@ function authenticateToken(req, res, next) {
   });
 }
 
-
 // Protected route: get user info
 app.get("/api/user", authenticateToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server error" });
-    console.error(err);
   }
-
 });
 
 // Get transaction history (paginated)
@@ -355,10 +334,7 @@ app.get("/api/transactions", authenticateToken, async (req, res) => {
     ]);
 
     res.json({ items, total, limit, skip });
-  } catch (err) {
-    console.error(err);
+  } catch {
     res.status(500).json({ message: "Failed to fetch transactions" });
   }
 });
-
-

@@ -1,8 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, ImageBackground, RefreshControl, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  ImageBackground,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
 import { useTransactionsApi } from "../../api";
 import { useAuth } from "../../auth";
-import { TransactionsScreenStyles as styles } from "./Styles";
+import { TransactionsScreenStyles as styles } from "../../styles/Styles";
 
 export default function TransactionsScreen() {
   const { token } = useAuth();
@@ -15,40 +22,47 @@ export default function TransactionsScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async (reset: boolean = false) => {
-    if (!token) return;
-    if (loading) return;
-    try {
-      if (reset) setRefreshing(true); else setLoading(true);
-      const nextSkip = reset ? 0 : skip;
-      const res = await txApi.list({ limit, skip: nextSkip });
-      const { items, total: newTotal } = res.data;
-      setTransactions(prev => (reset ? items : [...prev, ...items]));
-      setTotal(newTotal);
-      setSkip(nextSkip + items.length);
-    } catch (err) {
-      console.error("Failed to load transactions", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token, loading, skip, txApi]);
+  const load = useCallback(
+    async (reset: boolean = false) => {
+      if (!token) return;
+      if (loading) return;
+      try {
+        if (reset) setRefreshing(true);
+        else setLoading(true);
+        const nextSkip = reset ? 0 : skip;
+        const res = await txApi.list({ limit, skip: nextSkip });
+        const { items, total: newTotal } = res.data;
+        setTransactions((prev) => (reset ? items : [...prev, ...items]));
+        setTotal(newTotal);
+        setSkip(nextSkip + items.length);
+      } catch {
+        // Failed to load transactions
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [token, loading, skip, txApi],
+  );
 
   useEffect(() => {
     load(true);
   }, [load]);
 
   const renderItem = ({ item }: { item: any }) => (
-  <View style={styles.txItem}>
-    <Text style={styles.txMain}>
-      {item.type === "BUY" ? "Bought" : "Sold"} {item.amount.toFixed(2)} {item.fromCurrency}
-      {" → "}
-      {item.toCurrency}
-    </Text>
-    <Text style={styles.txMeta}>Rate: {item.rate}</Text>
-    <Text style={styles.txMeta}>{new Date(item.createdAt).toLocaleString()}</Text>
-  </View>
-);
+    <View style={styles.txItem}>
+      <Text style={styles.txMain}>
+        {item.type === "BUY" ? "Bought" : "Sold"} {item.amount.toFixed(2)}{" "}
+        {item.fromCurrency}
+        {" → "}
+        {item.toCurrency}
+      </Text>
+      <Text style={styles.txMeta}>Rate: {item.rate}</Text>
+      <Text style={styles.txMeta}>
+        {new Date(item.createdAt).toLocaleString()}
+      </Text>
+    </View>
+  );
 
   return (
     <ImageBackground
@@ -65,8 +79,11 @@ export default function TransactionsScreen() {
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 40 }}
           ListEmptyComponent={
-            loading ? <ActivityIndicator size="small" color="#fff" /> :
-            <Text style={styles.info}>No transactions yet.</Text>
+            loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.info}>No transactions yet.</Text>
+            )
           }
           refreshControl={
             <RefreshControl
@@ -87,4 +104,3 @@ export default function TransactionsScreen() {
     </ImageBackground>
   );
 }
-

@@ -1,10 +1,17 @@
 import axios from "axios";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, ImageBackground, ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  Image,
+  ImageBackground,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BACKEND_URL } from "../../config";
-import { SignUpScreenStyles } from "./Styles";
+import { SignUpScreenStyles } from "../../styles/Styles";
 export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +36,7 @@ export default function SignUpScreen() {
       setError("");
       await axios.post(`${BACKEND_URL}/api/user/register`, { email, password });
       router.replace("/screens/LoginScreen");
-    } catch (err:any) {
+    } catch (err: any) {
       setError(err.response?.data?.message || "Sign up failed. Try again.");
     }
   };
@@ -40,9 +47,16 @@ export default function SignUpScreen() {
       style={SignUpScreenStyles.Background}
       resizeMode="cover"
     >
-      <SafeAreaView style={[SignUpScreenStyles.container, { backgroundColor: "rgba(0,0,0,0.4)" }]}> 
-        <ScrollView contentContainerStyle={SignUpScreenStyles.inner} keyboardShouldPersistTaps="handled">
-
+      <SafeAreaView
+        style={[
+          SignUpScreenStyles.container,
+          { backgroundColor: "rgba(0,0,0,0.4)" },
+        ]}
+      >
+        <ScrollView
+          contentContainerStyle={SignUpScreenStyles.inner}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Logo */}
           <Image
             source={require("../../assets/images/logo.png")}
@@ -56,7 +70,10 @@ export default function SignUpScreen() {
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
-            style={[SignUpScreenStyles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
+            style={[
+              SignUpScreenStyles.input,
+              { backgroundColor: "rgba(255,255,255,0.85)" },
+            ]}
             placeholderTextColor="#999"
             autoCapitalize="none"
           />
@@ -66,21 +83,28 @@ export default function SignUpScreen() {
             secureTextEntry
             value={password}
             onChangeText={setPassword}
-            style={[SignUpScreenStyles.input, { backgroundColor: "rgba(255,255,255,0.85)" }]}
+            style={[
+              SignUpScreenStyles.input,
+              { backgroundColor: "rgba(255,255,255,0.85)" },
+            ]}
             placeholderTextColor="#999"
           />
 
           {error ? <Text style={SignUpScreenStyles.error}>{error}</Text> : null}
           {/* Button */}
-          <TouchableOpacity style={SignUpScreenStyles.button} onPress={handleSignUp}>
+          <TouchableOpacity
+            style={SignUpScreenStyles.button}
+            onPress={handleSignUp}
+          >
             <Text style={SignUpScreenStyles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
 
           {/* Navigate */}
-          <TouchableOpacity onPress={() => router.push("/screens/LoginScreen")}> 
-            <Text style={SignUpScreenStyles.link}>Already have an account? Log in</Text>
+          <TouchableOpacity onPress={() => router.push("/screens/LoginScreen")}>
+            <Text style={SignUpScreenStyles.link}>
+              Already have an account? Log in
+            </Text>
           </TouchableOpacity>
-
         </ScrollView>
       </SafeAreaView>
     </ImageBackground>

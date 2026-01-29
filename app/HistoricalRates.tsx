@@ -29,7 +29,6 @@ const WebDateInput = ({
 }) => {
   if (Platform.OS !== "web") return null;
 
-  // Use native HTML date input for web - provides calendar picker
   return (
     <input
       type="date"

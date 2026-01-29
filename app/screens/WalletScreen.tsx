@@ -29,6 +29,7 @@ export default function WalletScreen() {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loadingRates, setLoadingRates] = useState(true);
 
+  //buy currency states
   const [amount, setAmount] = useState("");
   const [inputCurrency, setInputCurrency] = useState<Rate | null>(null);
   const [targetCurrency, setTargetCurrency] = useState<Rate | null>(null);
@@ -79,9 +80,10 @@ export default function WalletScreen() {
     }
     const value = parseFloat(amount);
     if (isNaN(value)) return setConverted(null);
-
+    //conv input to pln
     const amountInPLN =
       inputCurrency.code === "PLN" ? value : value * inputCurrency.mid;
+    //conv pln to target
     const result =
       targetCurrency.code === "PLN"
         ? amountInPLN

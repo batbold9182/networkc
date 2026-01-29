@@ -1,7 +1,7 @@
 Fullstack currency convertor built with ReactNative/expo , Node.js/Express for the backend with MongoDb
-##############################################################################################################3
+#########################################################################3
 Featuring real time exchange rates from the National Bank of Poland (NBP)
-##############################################################################################################3
+#########################################################################3
 Features :
 User Authentication - Secure login/signup with JWT tokens
 Digital Wallet - Manage multiple currency balances
